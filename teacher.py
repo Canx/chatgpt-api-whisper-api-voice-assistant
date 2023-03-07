@@ -2,11 +2,10 @@ import gradio as gr
 import openai, config, subprocess
 openai.api_key = config.OPENAI_API_KEY
 
-messages = [{"role": "system", "content": 'Eres un profesor llamado Pepe. Intenta responder con 100 palabras o menos.'}]
 
-def transcribe(audio):
-    global messages
 
+def transcribe(audio, rol):
+    messages = [{"role": "system", "content": rol}]
     audio_file = open(audio, "rb")
     transcript = openai.Audio.transcribe("whisper-1", audio_file)
 
@@ -37,5 +36,13 @@ def transcribe(audio):
 
     return chat_transcript
 
-ui = gr.Interface(fn=transcribe, inputs=gr.Audio(source="microphone", type="filepath"), outputs="text").launch()
+ui = gr.Interface(fn=transcribe, inputs=
+    [ 
+      gr.Audio(source="microphone", type="filepath"),
+      gr.Textbox(label="Rol", 
+                 info="Initial text",
+                 lines=1,
+                 value="Eres un profesor de secundaria. Intenta responder con 100 palabras o menos.")
+    ]
+    , outputs="text").launch()
 ui.launch()
