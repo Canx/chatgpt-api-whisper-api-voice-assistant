@@ -5,7 +5,9 @@ openai.api_key = config.OPENAI_API_KEY
 
 
 def transcribe(audio, rol):
-    messages = [{"role": "system", "content": rol}]
+    estilo = " Intenta responder con 100 palabras o menos. Si indicas números escríbelos como texto, por ejemplo: uno, dos, tres,..."
+             
+    messages = [{"role": "system", "content": rol + estilo}]
     audio_file = open(audio, "rb")
     transcript = openai.Audio.transcribe("whisper-1", audio_file)
 
@@ -14,20 +16,10 @@ def transcribe(audio, rol):
     response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=messages)
 
     system_message = response["choices"][0]["message"]
-    print(system_message)
     messages.append(system_message)
 
-    #engine = pyttsx3.init()
-    #voices = engine.getProperty('voices')
-    #engine.setProperty('voice', 'spanish')
-    #engine.say(system_message['content'].replace("\n", ""))
-    #engine.runAndWait()
-
-    #  tts --text "Ya ha venido Marcos!" --model_name "tts_models/es/css10/vits"
     subprocess.call(["tts","--text", system_message['content'], "--model_name", "tts_models/es/css10/vits"])
-    # Falta reproducir con vlc
     subprocess.call(["play", "tts_output.wav"])
-    #subprocess.call(["spd-say", "-t", "female3", "-l", "es", "\"" + system_message['content'] + "\""])
 
     chat_transcript = ""
     for message in messages:
@@ -39,10 +31,11 @@ def transcribe(audio, rol):
 ui = gr.Interface(fn=transcribe, inputs=
     [ 
       gr.Audio(source="microphone", type="filepath"),
-      gr.Textbox(label="Rol", 
-                 info="Initial text",
-                 lines=1,
-                 value="Eres un profesor de secundaria. Intenta responder con 100 palabras o menos.")
-    ]
-    , outputs="text").launch()
+      gr.Dropdown(
+            ["Eres un profesor de secundaria.",
+             "Eres un médico.",
+             "Eres un psicólogo."
+            ], label="Rol", info="Indica el rol que tomará el asistente"
+        )
+    ], outputs="text").launch()
 ui.launch()
