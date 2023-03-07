@@ -2,7 +2,7 @@ import gradio as gr
 import openai, config, subprocess
 openai.api_key = config.OPENAI_API_KEY
 
-messages = [{"role": "system", "content": 'Eres un profesor llamado Pepe.'}]
+messages = [{"role": "system", "content": 'Eres un profesor llamado Pepe. Intenta responder con 100 palabras o menos.'}]
 
 def transcribe(audio):
     global messages
