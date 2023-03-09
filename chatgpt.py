@@ -10,13 +10,13 @@ def _conv_num(match):
 def numbers_to_words(text):
     return re.sub(r'\b\d+\b', _conv_num, text)
 
-def test_transcribe(audio, rol):
+def test_transcribe(audio, rol, palabras):
     texto = "Esto es 12, 24, 260"
 
     return numbers_to_words(texto)
 
-def transcribe(audio, rol):
-    estilo = " Intenta responder con 100 palabras o menos."
+def transcribe(audio, rol, palabras):
+    estilo = " Intenta responder con " + str(palabras) + " palabras o menos."
              
     messages = [{"role": "system", "content": rol + estilo}]
     audio_file = open(audio, "rb")
@@ -45,6 +45,7 @@ ui = gr.Interface(fn=transcribe, inputs=
       gr.Audio(source="microphone", type="filepath"),
       gr.Dropdown(
             ["Eres un profesor de secundaria.",
+             "Eres un programador.",
              "Eres un médico.",
              "Eres un psicólogo.",
              "Eres un abogado.",
@@ -52,6 +53,7 @@ ui = gr.Interface(fn=transcribe, inputs=
              "Eres un preparador físico",
              "Eres mi mejor amigo."
             ], label="Rol", info="Indica el rol que tomará el asistente"
-        )
+        ),
+      gr.Number(100, label="Límite de palabras en la respuesta")
     ], outputs="text").launch()
 ui.launch()
