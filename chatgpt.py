@@ -1,11 +1,22 @@
 import gradio as gr
 import openai, config, subprocess
+import re
+from num2words import num2words
 openai.api_key = config.OPENAI_API_KEY
 
+def _conv_num(match):
+    return num2words(match.group(), lang='es')
 
+def numbers_to_words(text):
+    return re.sub(r'\b\d+\b', _conv_num, text)
+
+def test_transcribe(audio, rol):
+    texto = "Esto es 12, 24, 260"
+
+    return numbers_to_words(texto)
 
 def transcribe(audio, rol):
-    estilo = " Intenta responder con 100 palabras o menos. Si indicas números escríbelos como texto, por ejemplo: uno, dos, tres,..."
+    estilo = " Intenta responder con 100 palabras o menos."
              
     messages = [{"role": "system", "content": rol + estilo}]
     audio_file = open(audio, "rb")
@@ -18,14 +29,15 @@ def transcribe(audio, rol):
     system_message = response["choices"][0]["message"]
     messages.append(system_message)
 
-    subprocess.call(["tts","--text", system_message['content'], "--model_name", "tts_models/es/css10/vits"])
-    subprocess.call(["play", "tts_output.wav"])
-
     chat_transcript = ""
     for message in messages:
         if message['role'] != 'system':
             chat_transcript += message['role'] + ": " + message['content'] + "\n\n"
 
+    
+    subprocess.call(["tts","--text", numbers_to_words(system_message['content']), "--model_name", "tts_models/es/css10/vits"])
+    subprocess.call(["play", "tts_output.wav"])
+    
     return chat_transcript
 
 ui = gr.Interface(fn=transcribe, inputs=
@@ -34,7 +46,11 @@ ui = gr.Interface(fn=transcribe, inputs=
       gr.Dropdown(
             ["Eres un profesor de secundaria.",
              "Eres un médico.",
-             "Eres un psicólogo."
+             "Eres un psicólogo.",
+             "Eres un abogado.",
+             "Eres un preparador de oposiciones de informática",
+             "Eres un preparador físico",
+             "Eres mi mejor amigo."
             ], label="Rol", info="Indica el rol que tomará el asistente"
         )
     ], outputs="text").launch()
