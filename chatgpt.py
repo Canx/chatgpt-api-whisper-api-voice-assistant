@@ -1,6 +1,8 @@
 import gradio as gr
 import openai, config, subprocess
 import re
+import subprocess
+import threading
 from num2words import num2words
 openai.api_key = config.OPENAI_API_KEY
 
@@ -27,16 +29,26 @@ def transcribe(audio, rol, palabras):
     response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=messages)
 
     system_message = response["choices"][0]["message"]
-    messages.append(system_message)
 
+    # Procesamos el TTS y lo reproducimos
+    def wait_for_process(proc):
+        proc.wait()
+        subprocess.Popen(["play", "tts_output.wav"])
+
+    proc = subprocess.Popen(["tts","--text", numbers_to_words(system_message['content']), "--model_name", "tts_models/es/css10/vits"])
+
+    threading.Thread(target=wait_for_process, args=(proc,)).start()
+
+    # Añadimos el nuevo mensaje al chat
+    messages.append(system_message)
     chat_transcript = ""
     for message in messages:
         if message['role'] != 'system':
             chat_transcript += message['role'] + ": " + message['content'] + "\n\n"
 
     
-    subprocess.call(["tts","--text", numbers_to_words(system_message['content']), "--model_name", "tts_models/es/css10/vits"])
-    subprocess.call(["play", "tts_output.wav"])
+
+    
     
     return chat_transcript
 
